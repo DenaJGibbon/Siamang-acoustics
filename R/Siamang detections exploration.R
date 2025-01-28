@@ -42,7 +42,6 @@ SikundurFilesCombined <- subset(SikundurFilesCombined,Common.Name !='nocall' & C
 nrow(SikundurFilesCombined)
 head(SikundurFilesCombined)
 
-
 TempVals <-str_split_fixed(SikundurFilesCombined$TempName,pattern='_',n=3)
 
 SikundurFilesCombined$Recorder <- TempVals[,1]
