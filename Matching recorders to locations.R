@@ -1,3 +1,10 @@
+# Next meeting:
+# We want to be able to move clips to new folders based on file names
+# This is to verify the detections at night are false positive
+# We want to see how many detections we are getting per hour
+# Siamang calls are long and might be able to look at one per hour
+# Want to start modeling
+
 # Read in library
 library(stringr)
 
@@ -15,6 +22,7 @@ LocationData$Last.file.date_reformat <- as.numeric( paste(TempDatesEnd[,3],TempD
 # Now read in selection table data
 SikundurFilesCombined <- read.csv('data/SikundurFilesCombined.csv')
 head(SikundurFilesCombined)
+nrow(SikundurFilesCombined)
 
 SikundurFilesCombined$Recorder <- str_split_fixed(SikundurFilesCombined$TempName, pattern = '_', n=3)[,1]
 SikundurFilesCombined$Date <- as.numeric(str_split_fixed(SikundurFilesCombined$TempName, pattern = '_', n=3)[,2])
@@ -25,27 +33,20 @@ SikundurFilesCombined$Date <- as.numeric(str_split_fixed(SikundurFilesCombined$T
 # We got stuck on the subsetting by date and we want to match point name
 UniquePointNames <- unique(LocationData$Point.Name)
 
+SikundurFilesDF <- data.frame()
+
 for( i in 1:length(UniquePointNames)){
  TempLocationData  <- subset(LocationData,Point.Name == UniquePointNames[i])
 
  for(j in 1:nrow(TempLocationData)){
 
- SikundurFilesSubsetUnit <- subset(SikundurFilesCombined,Recorder==TempLocationData[j,]$Unit[1])
+SikundurFilesSubsetUnit <- subset(SikundurFilesCombined,Recorder==TempLocationData[j,]$Unit[1])
 
- SikundurFilesSubsetUnit[between(SikundurFilesSubsetUnit$Date,
-         TempLocationData$First.file.date_reformat[1],
-         TempLocationData$Last.file.date_reformat[1]),]
+SikundurFilesSubsetUnit$Point.Name <-  TempLocationData[which(TempLocationData$First.file.date_reformat %in%  SikundurFilesSubsetUnit$Date ),]$Point.Name
 
- between(SikundurFilesSubsetUnit$Date, TempLocationData$First.file.date_reformat,
-         TempLocationData$Last.file.date_reformat)
-
-
- SikundurFilesSubsetDate <- subset(SikundurFilesSubsetUnit,
-                                   Date >= TempLocationData[j,]$First.file.date_reformat )
-
- SikundurFilesSubsetDate <- subset(SikundurFilesSubsetDate,Date <= TempLocationData[j,]$Last.file.date_reformat)
- range(SikundurFilesSubsetDate$Date)
+SikundurFilesDF <- rbind.data.frame(SikundurFilesDF,SikundurFilesSubsetUnit )
 
  }
 }
 
+SikundurFilesDF[1,]

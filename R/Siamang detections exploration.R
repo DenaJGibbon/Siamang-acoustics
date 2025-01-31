@@ -3,7 +3,7 @@ library(ggpubr)
 library(dplyr)
 
 # Read in the BirdNET detection files
-SikundurFiles <- list.files("/Users/denaclink/Desktop/RStudioProjects/Siamang-acoustics/data/Output", pattern = '.txt', recursive=T, full.names=T)
+SikundurFiles <- list.files("/Users/denaclink/Desktop/RStudioProjects/Siamang-acoustics/data/SIAMANG", pattern = '.txt', recursive=T, full.names=T)
 length(SikundurFiles) # 5249
 
 
@@ -30,10 +30,10 @@ head(SikundurFilesCombined)
 table(SikundurFilesCombined$Common.Name)
 
 # Save the output to a CSV
-write.csv(SikundurFilesCombined,'data/SikundurFilesCombined.csv',row.names = F)
+#write.csv(SikundurFilesCombined,'data/SikundurFilesCombined.csv',row.names = F)
 
 # Can read in the data
-SikundurFilesCombined <- read.csv('data/SikundurFilesCombined.csv')
+#SikundurFilesCombined <- read.csv('data/SikundurFilesCombined.csv')
 
 # Here we remove all non-detections and subset above confidence 0.92
 SikundurFilesCombined <- subset(SikundurFilesCombined,Common.Name !='nocall' & Confidence >= 0.99 )
@@ -41,6 +41,8 @@ SikundurFilesCombined <- subset(SikundurFilesCombined,Common.Name !='nocall' & C
 # Check structure of data
 nrow(SikundurFilesCombined)
 head(SikundurFilesCombined)
+
+nrow(subset(SikundurFilesCombined,Hour < 5))
 
 TempVals <-str_split_fixed(SikundurFilesCombined$TempName,pattern='_',n=3)
 
