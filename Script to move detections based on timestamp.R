@@ -1,7 +1,7 @@
 # Load relevant libraries
 library(stringr)
 
-# Change the directory to the location of your clips
+# NOTE: Change the directory to the location of your clips
 WavFilePaths <- list.files('data/FolderWithClips/',
            full.names = TRUE)
 
@@ -21,6 +21,9 @@ TimeInformation[1]
 # If it appears that all is working as expected, you can move forward with identifying recordings at night
 # Create a new directory where we will save our clips
 NewDirectory <- 'data/FolderWithSortedClips/'
+
+# You can use this command to see where the data folder will be saved
+getwd()
 
 # Extract the hour info from the sound file name
 Hour <- as.numeric(substr(TimeInformation,1,2))
