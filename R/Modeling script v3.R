@@ -66,7 +66,7 @@ range(SikundurFilesCombined$Confidence)
 gghistogram(data=SikundurFilesCombined, x='Date', facet.by = 'Common.Name')
 
 # What if we focus on high confidence for now?
-SikundurFilesCombinedHighConf <- subset(SikundurFilesCombined,Confidence >=0.99)
+SikundurFilesCombinedHighConf <- subset(SikundurFilesCombined,Confidence >=0.999)
 
 # Plot for high confidence
 gghistogram(data=SikundurFilesCombined, x='Date', facet.by = 'Common.Name')
@@ -78,6 +78,7 @@ gghistogram(data=SikundurFilesCombined, x='Date', facet.by = 'Common.Name')
 
 
 # Part 2. Place holder to remove false positives --------------------------
+
 
 # Part 3. Match recorder ID to location --------------------------
 
@@ -124,7 +125,8 @@ for( i in 1:length(UniquePointNames)){
 
     if(nrow(FilteredSikundur) > 0){
     FilteredSikundur$point.name <- TempLocationDataSingle$Point.Name
-
+    FilteredSikundur$LAT..decimal.degrees. <- TempLocationDataSingle$LAT..decimal.degrees.
+    FilteredSikundur$LON..decimal.degrees. <- TempLocationDataSingle$LON..decimal.degrees.
 
     SikundurFilesDF <- rbind.data.frame(SikundurFilesDF,FilteredSikundur )
     }
@@ -133,6 +135,7 @@ for( i in 1:length(UniquePointNames)){
 }
 
 nrow(SikundurFilesDF)
+
 
 # Part 4. Read in weather data --------------------------------------------
 WeatherData <-
@@ -161,46 +164,63 @@ SikundurFilesDFAddWeather <-
 # Check output
 head(SikundurFilesDFAddWeather)
 
-# Combine for each date and common.name
+
+# Convert the 't_max' column to numeric format to ensure calculations are accurate.
+SikundurFilesDFAddWeather$t_max <- as.numeric(SikundurFilesDFAddWeather$t_max)
+
+# Aggregate data by Date, Common.Name, and point.name
 SikundurFilesDFAddWeather_sumdetections <- SikundurFilesDFAddWeather %>%
-  group_by(Date, Common.Name,point.name) %>%
+  group_by(Date, Common.Name, point.name) %>%  # Group data by Date, species name, and point name
   summarise(
-    Detection_Count = n(),
-    t_max = first(t_max),       # Keep max temperature
-    t_min = first(t_min),       # Keep min temperature
-    precip_am = first(precip_am),  # Keep morning precipitation
-    precip_pm = first(precip_pm),  # Keep afternoon precipitation
-    .groups = "drop"
+    Detection_Count = n(),       # Count the number of detections per group
+    t_max = max(t_max),          # Retain the maximum temperature of the day
+    t_min = max(t_min),          # Retain the minimum temperature of the day
+    precip_am = max(precip_am),  # Retain the maximum morning precipitation
+    precip_pm = max(precip_pm),  # Retain the maximum afternoon precipitation
+    .groups = "drop"             # Ungroup after summarizing to prevent unexpected behavior
   )
 
-# View result
+# View the last few rows of the summarized dataset
+tail(SikundurFilesDFAddWeather_sumdetections)
+
+# View the first few rows of the summarized dataset
 head(SikundurFilesDFAddWeather_sumdetections)
 
-library(ggplot2)
+# Scatter plot: Relationship between morning precipitation and detection counts for each species
+ggpubr::ggscatter(
+  data = SikundurFilesDFAddWeather_sumdetections,
+  color = 'Common.Name',      # Color points by species
+  x = 'precip_am',            # X-axis: Morning precipitation
+  y = 'Detection_Count',      # Y-axis: Detection count
+  facet.by = 'Common.Name',   # Create separate plots for each species
+  scales = 'free',            # Allow different scales per species
+  add = c("reg.line")         # Add a regression line to each plot
+)
 
-# Convert Date to Date format
-SikundurFilesDFAddWeather_sumdetections$Date <- as.Date(SikundurFilesDFAddWeather_sumdetections$Date, format = "%Y%m%d")
+# Scatter plot: Relationship between afternoon precipitation and detection counts for each species
+ggpubr::ggscatter(
+  data = SikundurFilesDFAddWeather_sumdetections,
+  color = 'Common.Name',      # Color points by species
+  x = 'precip_pm',            # X-axis: Afternoon precipitation
+  y = 'Detection_Count',      # Y-axis: Detection count
+  facet.by = 'Common.Name',   # Create separate plots for each species
+  scales = 'free',            # Allow different scales per species
+  add = c("reg.line")         # Add a regression line to each plot
+)
 
-library(ggplot2)
+# Reshape data to a wide format, where each species gets its own column
+SikundurFilesDFAddWeather_wide <- SikundurFilesDFAddWeather_sumdetections %>%
+  pivot_wider(
+    names_from = Common.Name,   # Each species becomes a separate column
+    values_from = Detection_Count,  # Values are detection counts for each species
+    values_fill = list(Detection_Count = 0)  # Fill missing values with 0
+  )
 
-# Convert Date to Date format
-SikundurFilesDFAddWeather_sumdetections$Date <- as.Date(SikundurFilesDFAddWeather_sumdetections$Date, format = "%Y%m%d")
-
-SikundurFilesDFAddWeather_rmvnocall <-
-  subset(SikundurFilesDFAddWeather_sumdetections,Common.Name !='nocall')
-
-# Create the faceted plot
-ggplot(SikundurFilesDFAddWeather_rmvnocall, aes(x = Date)) +
-  geom_col(aes(y = Detection_Count), position = "dodge") +  # Bar plot for detections
-  geom_line(aes(y = precip_am * 10, group = 1), color = "blue", size = 1) +  # Line plot for rainfall
-  geom_point(aes(y = precip_am * 10), color = "blue", size = 2) +  # Points for rainfall
-  scale_y_continuous(
-    name = "Detection Count",
-    sec.axis = sec_axis(~ . / 10, name = "Rainfall (mm)")  # Secondary axis for rain
-  ) +
-  labs(title = "Detections and Rainfall Over Time",
-       x = "Date",
-       y = "Detections") +
-  facet_wrap(~ Common.Name, scales = "free_y") +  # Facet by species
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+# Scatter plot: Relationship between Chainsaw and Gibbon detections
+ggpubr::ggscatter(
+  data = SikundurFilesDFAddWeather_wide,
+  x = 'Chainsaw',  # X-axis: Chainsaw detections
+  y = 'Gibbon',    # Y-axis: Gibbon detections
+  scales = 'free', # Allow different scales
+  add = c("reg.line")  # Add a regression line
+)
