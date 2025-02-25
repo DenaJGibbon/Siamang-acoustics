@@ -12,6 +12,9 @@ library(DHARMa)
 SikundurFilesDFAddWeather_wide <-
   read.csv('data/SikundurFilesDFAddWeather_wide.csv')
 
+# Check structure
+head(SikundurFilesDFAddWeather_wide)
+
 # Scatter plot: Relationship between Chainsaw and Gibbon detections
 ggpubr::ggscatter(
   data = SikundurFilesDFAddWeather_wide,
@@ -48,25 +51,25 @@ table(SikundurFilesDF_filtered$Siamang)
 
 
 # Gibbon modeling ---------------------------------------------------------
-
 # Fit null model
 gibbon_model_null <- glmmTMB(
-  Gibbon ~ (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Gibbon ~ (1 | point.name),  # Random effect for point.name; might want to think about recorder ID
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
 
-# Fit model with number of days as predictor
+# Fit model with presence of chainsaw as a predictor
 gibbon_model_chainsaw <- glmmTMB(
-  Gibbon ~ Chainsaw + (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Gibbon ~ Chainsaw + (1 | point.name),
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
 
 summary(gibbon_model_chainsaw)
 
+# Gibbon and rain model
 gibbon_model_rain <- glmmTMB(
-  Gibbon ~ precip_am + (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Gibbon ~ precip_am + (1 | point.name),
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
@@ -80,15 +83,14 @@ bbmle::AICctab(gibbon_model_null,
 
 
 # Siamang modeling --------------------------------------------------------
-
 # Fit null model
 Siamang_model_null <- glmmTMB(
-  Siamang ~ (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Siamang ~ (1 | point.name),
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
 
-# Fit model with number of days as predictor
+# Fit model with chainsaw as predictor
 Siamang_model_chainsaw <- glmmTMB(
   Siamang ~ Chainsaw + (1 | point.name),  # Predictor: Season, random effect: Recorder
   data = SikundurFilesDF_filtered,
@@ -98,7 +100,7 @@ Siamang_model_chainsaw <- glmmTMB(
 summary(Siamang_model_chainsaw)
 
 Siamang_model_rain <- glmmTMB(
-  Siamang ~ precip_am + (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Siamang ~ precip_am + (1 | point.name),
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
@@ -106,7 +108,7 @@ Siamang_model_rain <- glmmTMB(
 summary(Siamang_model_rain)
 
 Siamang_model_rainpm <- glmmTMB(
-  Siamang ~ precip_pm + (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Siamang ~ precip_pm + (1 | point.name),
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
@@ -131,8 +133,8 @@ plot(res_gibbon_model_rain)
 testZeroInflation(res_gibbon_model_rain)
 
 ## Plot results
-sjPlot::plot_model(Siamang_model_rainpm,
+sjPlot::plot_model(Siamang_model_rain,
                    type=c("pred"))
 
-sjPlot::plot_model(gibbon_model_rain,
+sjPlot::plot_model(gibbon_model_chainsaw,
                    type=c("pred"))
