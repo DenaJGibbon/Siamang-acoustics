@@ -1,7 +1,13 @@
 library(glmmTMB)
 library(bbmle)
 library(sjPlot)
+library(DHARMa)
 
+# We start by modeling by the day/24-hr period with
+# 0 or 1 for the presence of absence of gibbons, siamangs, chainsaws
+# Model diagnostics are not great but might change after manual verification
+
+# Read in data ------------------------------------------------------------
 # Read in processed data
 SikundurFilesDFAddWeather_wide <-
   read.csv('data/SikundurFilesDFAddWeather_wide.csv')
@@ -25,16 +31,20 @@ ggpubr::ggscatter(
 
 # First lets try with logistic regression
 SikundurFilesDFAddWeather_wide$Chainsaw <-
-  ifelse(SikundurFilesDFAddWeather_wide$Chainsaw==0,0,1)
+  as.factor(ifelse(SikundurFilesDFAddWeather_wide$Chainsaw==0,0,1))
 
 SikundurFilesDFAddWeather_wide$Gibbon <-
-  ifelse(SikundurFilesDFAddWeather_wide$Gibbon==0,0,1)
+  as.factor(ifelse(SikundurFilesDFAddWeather_wide$Gibbon==0,0,1))
 
 SikundurFilesDFAddWeather_wide$Siamang <-
-  ifelse(SikundurFilesDFAddWeather_wide$Siamang==0,0,1)
+  as.factor(ifelse(SikundurFilesDFAddWeather_wide$Siamang==0,0,1))
 
 # Remove NA vals
 SikundurFilesDF_filtered <- na.omit(SikundurFilesDFAddWeather_wide)
+
+table(SikundurFilesDF_filtered$Chainsaw)
+table(SikundurFilesDF_filtered$Gibbon)
+table(SikundurFilesDF_filtered$Siamang)
 
 
 # Gibbon modeling ---------------------------------------------------------
@@ -96,7 +106,7 @@ Siamang_model_rain <- glmmTMB(
 summary(Siamang_model_rain)
 
 Siamang_model_rainpm <- glmmTMB(
-  Siamang ~ precip_am + precip_pm + (1 | point.name),  # Predictor: Season, random effect: Recorder
+  Siamang ~ precip_pm + (1 | point.name),  # Predictor: Season, random effect: Recorder
   data = SikundurFilesDF_filtered,
   family = binomial()
 )
@@ -109,7 +119,18 @@ bbmle::AICctab(Siamang_model_null,
                Siamang_model_rain, Siamang_model_rainpm,weights=T)
 
 
-# Plot results ------------------------------------------------------------
+# Evalute model diagnostics and lot results ------------------------------------------------------------
+# Check model fit for the siamang model
+res_Siamang_model_rainpm <- simulateResiduals(fittedModel = Siamang_model_rainpm)
+plot(res_Siamang_model_rainpm)  # Residual diagnostics
+testZeroInflation(res_Siamang_model_rainpm)
+
+# Check model fit for the gibbon model
+res_gibbon_model_rain <- simulateResiduals(fittedModel = gibbon_model_rain)
+plot(res_gibbon_model_rain)
+testZeroInflation(res_gibbon_model_rain)
+
+## Plot results
 sjPlot::plot_model(Siamang_model_rainpm,
                    type=c("pred"))
 
