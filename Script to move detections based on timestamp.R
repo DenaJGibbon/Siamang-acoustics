@@ -3,7 +3,14 @@ library(stringr)
 
 # NOTE: Change the directory to the location of your clips
 WavFilePaths <- list.files('data/FolderWithClips/',
-           full.names = TRUE)
+           full.names = TRUE, pattern='.wav')
+
+FileNames <-WavFilePaths
+SelectionID <- seq(1:length(FileNames))
+
+TempDF <- cbind.data.frame(SelectionID,FileNames)
+
+write.csv(TempDF,'data/TempDF.csv')
 
 # Look at the structure of the first path
 # We use basename to ignore the directory info
