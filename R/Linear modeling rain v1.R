@@ -34,13 +34,13 @@ ggpubr::ggscatter(
 
 # First lets try with logistic regression
 SikundurFilesDFAddWeather_wide$Chainsaw <-
-  as.factor(ifelse(SikundurFilesDFAddWeather_wide$Chainsaw==0,0,1))
+  as.factor(ifelse(SikundurFilesDFAddWeather_wide$CHAINSAW==0,0,1))
 
 SikundurFilesDFAddWeather_wide$Gibbon <-
-  as.factor(ifelse(SikundurFilesDFAddWeather_wide$Gibbon==0,0,1))
+  as.factor(ifelse(SikundurFilesDFAddWeather_wide$LARGIBBON==0,0,1))
 
 SikundurFilesDFAddWeather_wide$Siamang <-
-  as.factor(ifelse(SikundurFilesDFAddWeather_wide$Siamang==0,0,1))
+  as.factor(ifelse(SikundurFilesDFAddWeather_wide$SIAMANG==0,0,1))
 
 # Remove NA vals
 SikundurFilesDF_filtered <- na.omit(SikundurFilesDFAddWeather_wide)
@@ -78,7 +78,7 @@ summary(gibbon_model_rain)
 
 # Compare models using AICc,
 bbmle::AICctab(gibbon_model_null,
-               gibbon_model_chainsaw,
+               #gibbon_model_chainsaw,
                gibbon_model_rain, weights=T)
 
 
@@ -117,7 +117,7 @@ summary(Siamang_model_rainpm)
 
 # Compare models using AICc,
 bbmle::AICctab(Siamang_model_null,
-               Siamang_model_chainsaw,
+               #Siamang_model_chainsaw,
                Siamang_model_rain, Siamang_model_rainpm,weights=T)
 
 
