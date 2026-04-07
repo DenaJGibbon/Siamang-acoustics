@@ -267,7 +267,7 @@ SikundurFilesDFAddWeather_wide <- SikundurFilesDFAddWeather_sumdetections %>%
 # This is by date
 head(SikundurFilesDFAddWeather_wide)
 
-write.csv(SikundurFilesDFAddWeather_wide,'data/SikundurFilesDFAddWeather_wide_verifieddetects.csv',row.names = FALSE)
+#write.csv(SikundurFilesDFAddWeather_wide,'data/SikundurFilesDFAddWeather_wide_verifieddetects.csv',row.names = FALSE)
 
 # Scatter plot: Relationship between Chainsaw and Gibbon detections
 ggpubr::ggscatter(

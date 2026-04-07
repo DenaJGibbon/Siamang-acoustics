@@ -13,7 +13,7 @@ SikundurFilesDFAddWeather <- read.csv('data/SikundurFilesDFAddWeather.csv')
 # Inspect unique point names (locations) and class distribution
 unique(SikundurFilesDFAddWeather$point.name)
 table(SikundurFilesDFAddWeather$VerifiedClass)
-head(SikundurFilesDFAddWeather)
+range(SikundurFilesDFAddWeather$Time)
 
 SikundurFilesDFAddWeather$Time <-
   str_pad(SikundurFilesDFAddWeather$Time, width = 6, pad = "0")  # "07"
@@ -35,29 +35,31 @@ ForPlot <- ForPlot %>%
     Time_hms = hm(paste0(substr(Time_str, 1, 2), ":", substr(Time_str, 3, 4)))
   )
 
+ForPlot$Time_hms
 
+library(scales)
 
 ggplot(ForPlot, aes(x = Time_hms, fill = VerifiedClass)) +
-  geom_histogram(binwidth = 300) +  # 5-minute bins
-  scale_x_time(name = "Time of Day") +
+  geom_density() +
+  scale_x_time(
+    name = "Time of Day",
+    labels = function(x) {
+      lab <- scales::label_time("%H:%M")(x)  # drop seconds
+      lab[lab == "00:00"] <- ""              # remove midnight label
+      lab
+    }
+  ) +
   facet_wrap(~ VerifiedClass, nrow = 3) +
   theme_minimal() +
-  labs(title = "",
-       x = "Hour of Day",
-       y = "Count of Detections",
-       fill = "Class")+ guides(fill='none')
-
-
-ggplot(ForPlot, aes(x = Time_hms, fill = VerifiedClass)) +
-  geom_histogram(binwidth = 300) +  # 5-minute bins
-  scale_x_time(name = "Time of Day") +
-  facet_wrap(~ point.name, nrow = 3) +
-  theme_minimal() +
-  labs(title = "",
-       x = "Hour of Day",
-       y = "Count of Detections",
-       fill = "Class")+  # 5-minute bins
-  geom_vline(xintercept = as_hms("07:00:00"), linetype = "dashed", color = "black")
+  labs(
+    x = "Hour of Day",
+    y = "Density"
+  ) +
+  guides(fill = "none") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
 
 # --- Bin data by hour and flag class types for modeling ---
 SikundurBinned <- SikundurFilesDFAddWeather %>%
